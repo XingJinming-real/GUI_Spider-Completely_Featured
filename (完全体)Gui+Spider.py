@@ -7,7 +7,10 @@ from bs4 import BeautifulSoup
 import time
 
 os.chdir('D:\\')
-
+if not os.path.exists('password.txt'):
+    f=open('password.txt','wt')
+    f.write('admin,admin')
+    f.close()
 def download_img():
         if not os.path.exists('xjmssg.gif'):
             try:
@@ -15,6 +18,7 @@ def download_img():
                                headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.59 Safari/537.36 Edg/85.0.564.30'})
                 f=open('xjmssg.gif','wb')
                 f.write(r.content)
+                
                 f.close()
             except:
                 print('Download Error')
@@ -47,9 +51,17 @@ def main_tk():
     file_img=tk.PhotoImage(file='xjmssg.gif')
     img=canvas.create_image(0,0,anchor='nw',image=file_img)
     canvas.place(x=75,y=30)
-        
+    
     tk.Label(window,text='User name:').place(x=50,y=400)
     tk.Label(window,text='Password:').place(x=50,y=450)
+
+    def check_it():
+            
+        if var_pw.get() in list(keys.keys()):
+            tk.messagebox.showinfo(title='INFO',message='This account has existed')
+        else:
+            tk.messagebox.showinfo(title='INFO',message='This account has not registered')
+    #tk.Button(window,text='Check',command=check_it).place(x=295,y=400)
     tk.Button(window,text='View it',command=view_it).place(x=295,y=450)
     var_un=tk.StringVar()
     var_pw=tk.StringVar()
@@ -103,14 +115,14 @@ def main_tk():
         menubar.add_cascade(label='About',menu=about_menu)
         about_menu.add_command(label='About the author',command=about_author)
         about_menu.add_separator()
-        img=tk.PhotoImage(file='C:\\Users\\邢金明\\Desktop\\donate.gif')
-        about_menu.add_command(label='Donate',command=donate,image=img)
+        
+        about_menu.add_command(label='Donate',command=donate)
         
         def back_step():
             k=tk.messagebox.askquestion(title='Warning',message='Are you sure to quit out?')
             if k=='yes':
                 window_new.destroy()
-                main()
+                main_tk()
         back_menu.add_command(label='Back to the previous step',command=back_step)
 
         var_txt=tk.StringVar()
@@ -234,8 +246,7 @@ def main_tk():
                 pass
             
             if not ps_confirm.get()==ps.get():
-                tk.messagebox.showerror(title='Error',message='Please make sure your password is \
-    same!')
+                tk.messagebox.showerror(title='Error',message='Please make sure your password is same!')
                 su_window.destroy()
                 sign_up()
             else:
@@ -273,15 +284,6 @@ def main_tk():
     window.mainloop()
 
     
-if not os.path.exists('password.txt'):
-    f=open('password.txt','wt')
-    f.write('admin,admin')
-    f.close()
-else:
-    os.remove('password.txt')
-    f=open('password.txt','wt')
-    f.write('admin,admin')
-    f.close()
 
 
 
