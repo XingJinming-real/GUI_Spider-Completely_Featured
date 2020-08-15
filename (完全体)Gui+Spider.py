@@ -1,10 +1,10 @@
 import tkinter as tk
 import tkinter.messagebox
-import os
-import re
+import os,re,threading,multiprocessing
 import requests
 from bs4 import BeautifulSoup
 import time
+
 
 os.chdir('D:\\')
 if not os.path.exists('password.txt'):
@@ -108,7 +108,7 @@ def main_tk():
         menubar.add_cascade(label='Back',menu=back_menu)
         def donate():
             window_donate=tk.Tk()
-            tk.Label(window_donate,text='作者不易，打个赏吧~',font=('华文行楷',20)).pack()
+            tk.Label(window_donate,text='作者不易，点个赞吧~',font=('华文行楷',20)).pack()
         def about_author():
             tk.messagebox.showinfo(title='About_the_author',message=' I\'m a digital and utmost stone.\n My Github account is XingJinming-real.\n Like me, then give me a star on my Github.\n APPRECIATE IT !')
         about_menu=tk.Menu(window_new,tearoff=0)
@@ -134,33 +134,30 @@ def main_tk():
         
         text.see('end')
 
-        def acquire_all():
-            tk.messagebox.showwarning(title='Warning',message='想得美')
-            pass
+        
         def acquire_heroes():
+            url='http://news.4399.com/gonglue/wzlm/'+'yingxiong'+'/'
+            time_start=time.perf_counter()
             if not os.path.exists('D:\\王者荣耀Resources'):
                 os.mkdir('D:\\王者荣耀Resources')
-            url='http://news.4399.com/gonglue/wzlm/'+'yingxiong'+'/'
             html=get(url)
             text.insert('end','正在存储Heros,请等待\n\n')
             resources=get_all_hero_fuwen_url(html)
-            get_load_chuzhuang(resources)
-            get_load_hero_fuwen_recommend(resources)
-            get_load_hero_jiexi(resources)
+            threading.Thread(target=get_load_chuzhuang,args=((resources,))).start()
+            threading.Thread(target=get_load_hero_fuwen_recommend,args=((resources,))).start()
+            threading.Thread(target=get_load_hero_jiexi,args=((resources,))).start()
             resources=process_heros_html(html)
-            try:
-                for i in range(len(resources)):
-                    time.sleep(0.15)
-                    text.insert('end','正在存储 '+resources[i][0][0]+'.png,请等待\n\n')
-                    text.see(tk.END)
-                    text.update()
-                store_yingxiong_resources(resources)
-                text.insert('end','成功')
-            except:
-                print('请彻底删除已获取的文件后重试')
+            for i in range(len(resources)):
+                text.insert('end','正在存储 '+resources[i][0][0]+'相关资料,请等待\n\n')
+                text.see(tk.END)
+                text.update()
+            store_yingxiong_resources(resources)
+            time_end=time.perf_counter()
+            text.insert('end','成功. 总用时:{:.4}s\n'.format(time_end-time_start))
             pass
+        
         def acquire_skins():
-            
+            time_start=time.perf_counter()
             url='http://news.4399.com/gonglue/wzlm/'+'pifu'+'/'
             html=get(url)
             if not os.path.exists('D:\\王者荣耀Resources'):
@@ -168,15 +165,17 @@ def main_tk():
             text.insert('end','正在存储Skins,请等待\n\n')
             resources=process_skins_html(html)
             for i in range(len(resources)):
-                time.sleep(0.15)
+                
                 text.insert('end','正在存储 '+resources[i][0]+'.png,请等待\n\n')
                 text.see(tk.END)
                 text.update()
             store_pifu_resources(resources)
-            text.insert('end','成功')
+            time_end=time.perf_counter()
+            text.insert('end','成功. 总用时:{:.4}s\n'.format(time_end-time_start))
             pass
+        
         def acquire_outfits():
-            
+            time_start=time.perf_counter()
             url='http://news.4399.com/gonglue/wzlm/'+'daoju'+'/'
             html=get(url)
             if not os.path.exists('D:\\王者荣耀Resources'):
@@ -185,14 +184,24 @@ def main_tk():
             resources=process_properties_html(html)
             try:
                 for i in range(len(resources)):
-                    time.sleep(0.15)
+                    
                     text.insert('end','正在存储 '+resources[i][0]+'.png,请等待\n\n')
                     text.see(tk.END)
                     text.update()
                 store_daoju_resources(resources)
-                text.insert('end','成功')
+                time_end=time.perf_counter()
+                text.insert('end','成功. 总用时:{:.4}s\n'.format(time_end-time_start))
             except:
                 print('请彻底删除已获取的文件后重试')
+            pass
+        
+        def acquire_all():
+            tk.messagebox.showwarning(title='Warning',message=' 请等待 ')
+            
+            threading.Thread(target=acquire_heroes).start()
+            threading.Thread(target=acquire_skins).start()
+            threading.Thread(target=acquire_outfits).start()
+            
             pass
         
         tk.Button(window_new,text='Acquire All',command=acquire_all).place(x=80,y=200)
@@ -200,7 +209,7 @@ def main_tk():
         tk.Button(window_new,text='Acquire Outfits',command=acquire_outfits).place(x=80,y=100)
         tk.Button(window_new,text='Acquire Skins',command=acquire_skins).place(x=80,y=150)
         tk.Label(window_new,text='Author\'s Email: xjm0801@126.com. Call me for any problem.',font=('华文行楷',20)).place(x=25,y=350)
-
+        
         
         window_new.config(menu=menubar)
         pass
@@ -263,12 +272,20 @@ def main_tk():
         check_b.place(x=220,y=350)
         pass
 
-
+    def see_all():
+        accounts=[]
+        with open('D:\\password.txt','rt') as f:
+            for i in f:
+                accounts.append(i.split(',')[0])
+        tk.messagebox.showinfo(title='Show',message='\n'.join(accounts))
+        pass
+    
     keys={}
     b_login=tk.Button(window,text='Log in',command=login)
     b_sign_up=tk.Button(window,text='Sign up',command=sign_up)
     b_login.place(x=350,y=480)
     b_sign_up.place(x=420,y=480)
+    tk.Button(window,text='See all accounts',command=see_all).place(x=295,y=400)
     menubar=tk.Menu(window)
     back_menu=tk.Menu(menubar,tearoff=0)#  待完善menubar
     menubar.add_cascade(label='Back',menu=back_menu)
@@ -346,9 +363,12 @@ def process_heros_html(html):#有名字和视频演示  resources有视频格式
         resources.append(resources_sec)
     mid_ls_tag=soup.find_all('a','yxvideo')
     for i in range(len(mid_ls_tag)):
-        mkvls=[]
-        mkvls.append(mid_ls_tag[i].get('href'))
-        resources[i].append(mkvls)
+        try:
+            mkvls=[]
+            mkvls.append(mid_ls_tag[i].get('href'))
+            resources[i].append(mkvls)
+        except:
+            continue
     return resources
 
 def process_skins_html(html):#resources 结构为[[name,url],[name,url],....]
@@ -389,6 +409,7 @@ def store_pifu_resources(resources):
     pass
 
 def store_yingxiong_resources(resources):
+    px=1
     if not os.path.exists('D:\\王者荣耀Resources\\YingXiong_img'):#创建照片位置
         os.mkdir('D:\\王者荣耀Resources\\YingXiong_img')
     os.chdir('D:\\王者荣耀Resources\\YingXiong_img')  #先存照片转到照片文件夹
@@ -523,7 +544,6 @@ def get_load_hero_jiexi(resources):   #jiexi为一行字符
     pass
     
 def main():
-    global text
     index=input("请输入要获得的数据,英雄yx/皮肤pf/装备zb：")
     indexls={'英雄':'yingxiong','皮肤':'pifu','装备':'daoju','yx':'yingxiong','zb':'daoju','pf':'pifu'}
     keyword=indexls.get(index,'请正确输入：')
@@ -575,3 +595,4 @@ def main():
 hd={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.68 Safari/537.36 Edg/84.0.522.28','Referer':'http://newsimg.5054399.com/wzlm/v3/css/style.css'}
 download_img()
 main_tk()
+
